@@ -14,29 +14,14 @@
       "action": "output",
       "args": {
         "outputDir": "./output",
-        "outputName": "geosite.dat",
-        "excludeAttrs": "cn@!cn@ads,geolocation-cn@!cn@ads,geolocation-!cn@cn@ads",
-        "gfwlistOutput": "geolocation-!cn"
+        "outputName": "geosite.dat"
       }
     },
     {
       "type": "text",
       "action": "output",
       "args": {
-        "outputDir": "./output",
-        "wantedList": [
-          "category-ads-all",
-          "tld-cn",
-          "cn",
-          "geolocation-cn",
-          "tld-!cn",
-          "geolocation-!cn",
-          "private",
-          "apple",
-          "icloud",
-          "google",
-          "steam"
-        ]
+        "outputDir": "./output"
       }
     }
   ]
