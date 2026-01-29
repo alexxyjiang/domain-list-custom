@@ -3,13 +3,12 @@ package plaintext
 import (
 	"bufio"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/Loyalsoldier/domain-list-custom/lib"
+	"github.com/alexxyjiang/domain-list-custom/lib"
 	router "github.com/v2fly/v2ray-core/v5/app/router/routercommon"
 )
 
@@ -90,7 +89,7 @@ func (d *DomainListIn) GetDescription() string {
 func (d *DomainListIn) Input(container lib.Container) (lib.Container, error) {
 	// Read all files from data directory
 	fileInfoMap := make(map[string]*fileInfo)
-	
+
 	err := filepath.Walk(d.DataDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -100,7 +99,7 @@ func (d *DomainListIn) Input(container lib.Container) (lib.Container, error) {
 		}
 
 		filename := strings.ToUpper(filepath.Base(path))
-		
+
 		// Filter by wanted list if specified
 		if len(d.Want) > 0 && !d.Want[filename] {
 			return nil
@@ -128,7 +127,7 @@ func (d *DomainListIn) Input(container lib.Container) (lib.Container, error) {
 	for filename, fileData := range fileInfoMap {
 		entry := lib.NewEntry(filename)
 		entry.AddDomains(fileData.Domains)
-		
+
 		if err := container.Add(entry); err != nil {
 			return nil, err
 		}
@@ -153,11 +152,11 @@ func (d *DomainListIn) processFile(path string, filename string) (*fileInfo, err
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		
+
 		if lib.IsEmpty(line) {
 			continue
 		}
-		
+
 		line = lib.RemoveComment(line)
 		if lib.IsEmpty(line) {
 			continue
@@ -185,7 +184,7 @@ func (d *DomainListIn) parseRule(line string, info *fileInfo) (*router.Domain, b
 	line = strings.TrimSpace(line)
 
 	if line == "" {
-		return nil, false, errors.New("empty line")
+		return nil, false, fmt.Errorf("empty line")
 	}
 
 	// Parse include rule
@@ -197,7 +196,7 @@ func (d *DomainListIn) parseRule(line string, info *fileInfo) (*router.Domain, b
 	parts := strings.Split(line, " ")
 	ruleWithType := strings.TrimSpace(parts[0])
 	if ruleWithType == "" {
-		return nil, false, errors.New("empty rule")
+		return nil, false, fmt.Errorf("empty rule")
 	}
 
 	var domain router.Domain
@@ -222,10 +221,10 @@ func (d *DomainListIn) parseRule(line string, info *fileInfo) (*router.Domain, b
 func (d *DomainListIn) parseInclusion(inclusion string, info *fileInfo) {
 	inclusionVal := strings.TrimPrefix(strings.TrimSpace(inclusion), "include:")
 	info.HasInclusion = true
-	
+
 	inclusionValSlice := strings.Split(inclusionVal, "@")
 	filename := strings.ToUpper(strings.TrimSpace(inclusionValSlice[0]))
-	
+
 	switch len(inclusionValSlice) {
 	case 1:
 		// Inclusion without attribute
@@ -253,7 +252,7 @@ func (d *DomainListIn) parseTypeRule(domain string, rule *router.Domain) error {
 		ruleType := strings.TrimSpace(kv[0])
 		ruleVal := strings.TrimSpace(kv[1])
 		rule.Value = strings.ToLower(ruleVal)
-		
+
 		switch strings.ToLower(ruleType) {
 		case "full":
 			rule.Type = router.Domain_Full
@@ -280,17 +279,17 @@ func (d *DomainListIn) parseAttribute(attr string) (*router.Domain_Attribute, er
 	var attribute router.Domain_Attribute
 	attribute.Key = strings.ToLower(attr)
 	attribute.TypedValue = &router.Domain_Attribute_BoolValue{BoolValue: true}
-	
+
 	return &attribute, nil
 }
 
 func (d *DomainListIn) processInclusions(fileInfoMap map[string]*fileInfo) error {
 	// Build dependency levels
 	processed := make(map[string]bool)
-	
+
 	for len(processed) < len(fileInfoMap) {
 		changed := false
-		
+
 		for filename, info := range fileInfoMap {
 			if processed[filename] {
 				continue
@@ -334,7 +333,7 @@ func (d *DomainListIn) processInclusions(fileInfoMap map[string]*fileInfo) error
 						}
 					}
 				}
-				
+
 				processed[filename] = true
 				changed = true
 			}

@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 
-	"github.com/Loyalsoldier/domain-list-custom/lib"
+	"github.com/alexxyjiang/domain-list-custom/lib"
 	"github.com/spf13/cobra"
 )
 
@@ -19,47 +19,48 @@ var listCmd = &cobra.Command{
 	Short:   "List available domain lists",
 	Run: func(cmd *cobra.Command, args []string) {
 		configFile, _ := cmd.Flags().GetString("config")
-		
+		slog.Debug("loading config from", "config", configFile)
+
 		instance, err := lib.NewInstance()
 		if err != nil {
-			log.Fatal(err)
+			slog.Error("failed to create new instance", "err", err)
 		}
 
 		if err := instance.InitConfig(configFile); err != nil {
-			log.Fatal(err)
+			slog.Error("failed to initial config", "err", err)
 		}
 
 		// Process only input to get the list
 		for idx, inputConfig := range instance.Config.Input {
-			log.Printf("Processing input [%d/%d]: type=%s, action=%s", 
-				idx+1, len(instance.Config.Input), inputConfig.Type, inputConfig.Action)
-			
+			slog.Debug("processing input ...", "processed", idx+1, "total", len(instance.Config.Input), "type", inputConfig.Type, "action", inputConfig.Action)
+
 			converter, err := inputConfig.GetInputConverter()
 			if err != nil {
-				log.Fatal(err)
+				slog.Error("failed to get input converter", "type", inputConfig.Type, "err", err)
 			}
 
 			newContainer, err := converter.Input(instance.Container)
 			if err != nil {
-				log.Fatal(err)
+				slog.Error("failed to create input container", "type", inputConfig.Type, "err", err)
 			}
 
 			if newContainer != nil {
 				instance.Container = newContainer
 			}
 		}
+		slog.Debug("all input processors done")
 
 		// List all entries
-		fmt.Printf("\nAvailable domain lists (%d total):\n", instance.Container.Len())
+		fmt.Println("Available domain lists:", instance.Container.Len(), "in total")
 		fmt.Println("---")
-		
+
 		names := instance.Container.GetNames()
 		for _, name := range names {
 			entry, found := instance.Container.GetEntry(name)
 			if !found {
 				continue
 			}
-			fmt.Printf("  - %s (%d domains)\n", name, len(entry.GetDomains()))
+			fmt.Println(" - ", name, "(", len(entry.GetDomains()), "domains)")
 		}
 	},
 }

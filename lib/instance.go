@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -49,7 +49,7 @@ func (i *Instance) InitConfig(configFile string) error {
 
 		configBytes, err = io.ReadAll(resp.Body)
 		if err != nil {
-			return fmt.Errorf("failed to read config: %w", err)
+			return fmt.Errorf("failed to read config uri: %w", err)
 		}
 	} else {
 		// Read from local file
@@ -76,10 +76,10 @@ func (i *Instance) Run() error {
 	}
 
 	// Process input
-	log.Println("Processing input...")
+	slog.Info("start input processing ...")
 	for idx, inputConfig := range i.Config.Input {
-		log.Printf("  [%d/%d] type: %s, action: %s", idx+1, len(i.Config.Input), inputConfig.Type, inputConfig.Action)
-		
+		slog.Debug("processing input ...", "processed", idx+1, "total", len(i.Config.Input), "type", inputConfig.Type, "action", inputConfig.Action)
+
 		converter, err := inputConfig.GetInputConverter()
 		if err != nil {
 			return fmt.Errorf("failed to get input converter: %w", err)
@@ -87,33 +87,30 @@ func (i *Instance) Run() error {
 
 		newContainer, err := converter.Input(i.Container)
 		if err != nil {
-			return fmt.Errorf("failed to process input [type: %s, action: %s]: %w", 
-				inputConfig.Type, inputConfig.Action, err)
+			return fmt.Errorf("failed to process input [type: %s, action: %s]: %w", inputConfig.Type, inputConfig.Action, err)
 		}
 
 		if newContainer != nil {
 			i.Container = newContainer
 		}
 	}
-
-	log.Printf("Processed %d entries\n", i.Container.Len())
+	slog.Info("input processing completed")
 
 	// Process output
-	log.Println("Processing output...")
+	slog.Info("start output processing ...")
 	for idx, outputConfig := range i.Config.Output {
-		log.Printf("  [%d/%d] type: %s, action: %s", idx+1, len(i.Config.Output), outputConfig.Type, outputConfig.Action)
-		
+		slog.Debug("processing output ...", "processed", idx+1, "total", len(i.Config.Input), "type", outputConfig.Type, "action", outputConfig.Action)
+
 		converter, err := outputConfig.GetOutputConverter()
 		if err != nil {
 			return fmt.Errorf("failed to get output converter: %w", err)
 		}
 
 		if err := converter.Output(i.Container); err != nil {
-			return fmt.Errorf("failed to process output [type: %s, action: %s]: %w", 
-				outputConfig.Type, outputConfig.Action, err)
+			return fmt.Errorf("failed to process output [type: %s, action: %s]: %w", outputConfig.Type, outputConfig.Action, err)
 		}
 	}
+	slog.Info("output processing completed")
 
-	log.Println("Done!")
 	return nil
 }

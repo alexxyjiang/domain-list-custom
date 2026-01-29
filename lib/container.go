@@ -3,6 +3,7 @@ package lib
 import (
 	"fmt"
 	"iter"
+	"log/slog"
 	"strings"
 	"sync"
 )
@@ -48,8 +49,10 @@ func (c *SimpleContainer) Add(entry *Entry) error {
 	if existing, found := c.entries[name]; found {
 		// Merge domains
 		existing.AddDomains(entry.GetDomains())
+		slog.Debug("adding entry to existing", "name", name, "domains count", len(entry.GetDomains()))
 	} else {
 		c.entries[name] = entry
+		slog.Debug("adding entry with creation", "name", name, "domains count", len(entry.GetDomains()))
 	}
 
 	return nil
@@ -63,7 +66,7 @@ func (c *SimpleContainer) Get(name string) (*Entry, bool) {
 // GetEntry retrieves an entry by name
 func (c *SimpleContainer) GetEntry(name string) (*Entry, bool) {
 	name = strings.ToUpper(strings.TrimSpace(name))
-	
+
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
@@ -74,7 +77,7 @@ func (c *SimpleContainer) GetEntry(name string) (*Entry, bool) {
 // Has checks if an entry exists
 func (c *SimpleContainer) Has(name string) bool {
 	name = strings.ToUpper(strings.TrimSpace(name))
-	
+
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 

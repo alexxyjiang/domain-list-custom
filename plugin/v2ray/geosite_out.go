@@ -4,14 +4,14 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"time"
 
-	"github.com/Loyalsoldier/domain-list-custom/lib"
+	"github.com/alexxyjiang/domain-list-custom/lib"
 	router "github.com/v2fly/v2ray-core/v5/app/router/routercommon"
 	"google.golang.org/protobuf/proto"
 )
@@ -31,15 +31,15 @@ func init() {
 }
 
 type GeositeOut struct {
-	Type            string
-	Action          lib.Action
-	Description     string
-	OutputDir       string
-	OutputName      string
-	Want            []string
-	Exclude         []string
-	ExcludeAttrs    map[string]map[string]bool
-	GFWListOutput   string
+	Type          string
+	Action        lib.Action
+	Description   string
+	OutputDir     string
+	OutputName    string
+	Want          []string
+	Exclude       []string
+	ExcludeAttrs  map[string]map[string]bool
+	GFWListOutput string
 }
 
 func newGeositeOut(action lib.Action, data json.RawMessage) (lib.OutputConverter, error) {
@@ -121,6 +121,8 @@ func (g *GeositeOut) Output(container lib.Container) error {
 		return fmt.Errorf("failed to generate geosite list")
 	}
 
+	slog.Debug("geosite out", "geositeList", geositeList)
+
 	// Marshal to protobuf
 	protoBytes, err := proto.Marshal(geositeList)
 	if err != nil {
@@ -133,7 +135,7 @@ func (g *GeositeOut) Output(container lib.Container) error {
 		return fmt.Errorf("failed to write file %s: %w", filepath, err)
 	}
 
-	log.Printf("✅ Generated %s\n", g.OutputName)
+	slog.Info("✅ output generated", "name", g.OutputName)
 
 	// Generate GFWList if specified
 	if g.GFWListOutput != "" {
@@ -151,7 +153,7 @@ func (g *GeositeOut) toGeoSiteList(container lib.Container) *router.GeoSiteList 
 	for _, name := range g.filterAndSortList(container) {
 		entry, found := container.GetEntry(name)
 		if !found {
-			log.Printf("❌ entry %s not found\n", name)
+			slog.Debug("❌️ entry not found", "name", name)
 			continue
 		}
 
@@ -166,7 +168,7 @@ func (g *GeositeOut) toGeoSiteList(container lib.Container) *router.GeoSiteList 
 
 func (g *GeositeOut) toGeoSite(entry *lib.Entry) *router.GeoSite {
 	geosite := new(router.GeoSite)
-	geosite.CountryCode = strings.ToLower(entry.GetName())
+	geosite.CountryCode = strings.ToUpper(entry.GetName())
 
 	// Filter domains based on exclude attributes
 	excludeAttrsMap := g.ExcludeAttrs[entry.GetName()]
@@ -247,7 +249,7 @@ func (g *GeositeOut) generateGFWList(container lib.Container) error {
 		return fmt.Errorf("failed to write gfwlist: %w", err)
 	}
 
-	log.Printf("✅ Generated gfwlist.txt\n")
+	slog.Info("✅ file gfwlist.txt generated")
 	return nil
 }
 

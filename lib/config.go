@@ -2,7 +2,6 @@ package lib
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 )
@@ -21,7 +20,7 @@ type outputConfigCreator func(Action, json.RawMessage) (OutputConverter, error)
 func RegisterInputConfigCreator(id string, fn inputConfigCreator) error {
 	id = strings.ToLower(id)
 	if _, found := inputConfigCreatorCache[id]; found {
-		return errors.New("config creator has already been registered")
+		return fmt.Errorf("config creator has already been registered")
 	}
 	inputConfigCreatorCache[id] = fn
 	return nil
@@ -31,7 +30,7 @@ func createInputConfig(id string, action Action, data json.RawMessage) (InputCon
 	id = strings.ToLower(id)
 	fn, found := inputConfigCreatorCache[id]
 	if !found {
-		return nil, errors.New("unknown config type")
+		return nil, fmt.Errorf("unknown config type")
 	}
 	return fn(action, data)
 }
@@ -39,7 +38,7 @@ func createInputConfig(id string, action Action, data json.RawMessage) (InputCon
 func RegisterOutputConfigCreator(id string, fn outputConfigCreator) error {
 	id = strings.ToLower(id)
 	if _, found := outputConfigCreatorCache[id]; found {
-		return errors.New("config creator has already been registered")
+		return fmt.Errorf("config creator has already been registered")
 	}
 	outputConfigCreatorCache[id] = fn
 	return nil
@@ -49,7 +48,7 @@ func createOutputConfig(id string, action Action, data json.RawMessage) (OutputC
 	id = strings.ToLower(id)
 	fn, found := outputConfigCreatorCache[id]
 	if !found {
-		return nil, errors.New("unknown config type")
+		return nil, fmt.Errorf("unknown config type")
 	}
 	return fn(action, data)
 }
@@ -57,7 +56,7 @@ func createOutputConfig(id string, action Action, data json.RawMessage) (OutputC
 func RegisterInputConverter(id string, converter InputConverter) error {
 	id = strings.ToLower(id)
 	if _, found := inputConverterCache[id]; found {
-		return errors.New("converter has already been registered")
+		return fmt.Errorf("converter has already been registered")
 	}
 	inputConverterCache[id] = converter
 	return nil
@@ -66,7 +65,7 @@ func RegisterInputConverter(id string, converter InputConverter) error {
 func RegisterOutputConverter(id string, converter OutputConverter) error {
 	id = strings.ToLower(id)
 	if _, found := outputConverterCache[id]; found {
-		return errors.New("converter has already been registered")
+		return fmt.Errorf("converter has already been registered")
 	}
 	outputConverterCache[id] = converter
 	return nil

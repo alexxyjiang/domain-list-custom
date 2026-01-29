@@ -8,7 +8,7 @@ import (
 
 // Entry is a single domain list entry
 type Entry struct {
-	Name   string
+	Name    string
 	Domains []*router.Domain
 }
 
@@ -48,7 +48,7 @@ func (e *Entry) GetDomains() []*router.Domain {
 // MarshalText converts the entry to text format
 func (e *Entry) MarshalText() ([]byte, error) {
 	result := make([]byte, 0, 1024*512)
-	
+
 	for _, domain := range e.Domains {
 		ruleVal := strings.TrimSpace(domain.GetValue())
 		if len(ruleVal) == 0 {

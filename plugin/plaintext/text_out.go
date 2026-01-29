@@ -3,13 +3,13 @@ package plaintext
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 
-	"github.com/Loyalsoldier/domain-list-custom/lib"
+	"github.com/alexxyjiang/domain-list-custom/lib"
 )
 
 const (
@@ -85,7 +85,7 @@ func (t *TextOut) Output(container lib.Container) error {
 	for _, name := range t.filterAndSortList(container) {
 		entry, found := container.GetEntry(name)
 		if !found {
-			log.Printf("❌ entry %s not found\n", name)
+			slog.Debug("❌️ entry not found", "name", name)
 			continue
 		}
 
@@ -96,12 +96,12 @@ func (t *TextOut) Output(container lib.Container) error {
 
 		filename := strings.ToLower(entry.GetName()) + t.OutputExt
 		filepath := filepath.Join(t.OutputDir, filename)
-		
+
 		if err := os.WriteFile(filepath, data, 0644); err != nil {
 			return fmt.Errorf("failed to write file %s: %w", filepath, err)
 		}
 
-		log.Printf("✅ Generated %s\n", filename)
+		slog.Info("✅ file generated", "filename", filename)
 	}
 
 	return nil

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 
-	"github.com/Loyalsoldier/domain-list-custom/lib"
+	"github.com/alexxyjiang/domain-list-custom/lib"
 	"github.com/spf13/cobra"
 )
 
@@ -18,19 +18,20 @@ var convertCmd = &cobra.Command{
 	Short:   "Convert domain list data from one format to another by using config file",
 	Run: func(cmd *cobra.Command, args []string) {
 		configFile, _ := cmd.Flags().GetString("config")
-		log.Println("Use config:", configFile)
+		slog.Debug("loading config from", "config", configFile)
 
 		instance, err := lib.NewInstance()
 		if err != nil {
-			log.Fatal(err)
+			slog.Error("failed to create new instance", "err", err)
 		}
 
 		if err := instance.InitConfig(configFile); err != nil {
-			log.Fatal(err)
+			slog.Error("failed to initial config", "err", err)
 		}
 
 		if err := instance.Run(); err != nil {
-			log.Fatal(err)
+			slog.Error("failed to convert", "err", err)
 		}
+		slog.Info("convert success")
 	},
 }
